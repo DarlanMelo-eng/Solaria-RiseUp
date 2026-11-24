@@ -1,0 +1,35 @@
+# Roda a cada Pull Request e push na main: o código só entra se lint, tipos, testes e build passarem.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: solaria_test
+          POSTGRES_USER: solaria
+          POSTGRES_PASSWORD: senha_apenas_do_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U solaria -d solaria_test"
+          --health-interval 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://solaria:senha_apenas_do_ci@localhost:5432/solaria_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

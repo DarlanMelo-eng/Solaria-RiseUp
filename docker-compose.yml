@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: solaria
+      POSTGRES_USER: solaria
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    ports:
+      - '127.0.0.1:5432:5432'
+    # Executado somente quando o volume PostgreSQL é criado pela primeira vez.
+    # Banco isolado para Vitest.
+    volumes:
+      - solaria_pg:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U solaria -d solaria']
+      interval: 5s
+      retries: 10
+volumes:
+  solaria_pg:
